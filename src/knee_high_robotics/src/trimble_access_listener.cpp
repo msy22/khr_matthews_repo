@@ -165,15 +165,16 @@ int main(int argc, char **argv)
 
   // Create the TCP socket to listen to positions from Trimble Access
   // Note: the "conn" function will hang if no connection can be made
-//  tcp_client trimble_tcp_client;
-//  trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
+  tcp_client trimble_tcp_client;
+  trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
 
   // Enter into a loop, consistently polling TA for positions, only exit
   // when "Ctrl + C" is pressed
   while (ros::ok())
   {
     // Get a message from Trimble Access
-    //latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
+    latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
+    cout << latest_ta_position << endl;
     //ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
 
     // Publish the odometry
