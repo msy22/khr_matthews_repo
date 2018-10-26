@@ -26,9 +26,12 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
+
+## Possible format >> add_library(lib_name .cpp .h .hpp)
+add_library(tcp_client_class     src/tcp_client_class.cpp)
 
 
 # Executables (.cpp files won't be compiled properly without these lines)
@@ -37,6 +40,8 @@ add_executable(trimble_access_listener src/trimble_access_listener.cpp)
 
 
 # Linking
+target_link_libraries(tcp_client_class        ${catkin_LIBRARIES})
 target_link_libraries(robot_navigator         ${catkin_LIBRARIES})
-target_link_libraries(trimble_access_listener ${catkin_LIBRARIES})
+target_link_libraries(trimble_access_listener ${catkin_LIBRARIES} 
+                                              tcp_client_class)
 

@@ -1,4 +1,4 @@
-// Includes____________________________________________________________________________
+// Includes_____________________________________________________________________
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "nav_msgs/Odometry.h"
@@ -6,17 +6,30 @@
 #include "sensor_msgs/Imu.h"
 #include <tf/transform_broadcaster.h>
 #include "geometry_msgs/TransformStamped.h"
-#include <sstream>
+#include <sys/socket.h>                             // socket
+#include <netinet/in.h>                             // Required for TCP comms
+
+#include <knee_high_robotics/tcp_client_class.h>
 
 // Setup namespaces_____________________________________________________________
 using namespace std;
 
-// Globals____________________________________________________________________________
+// Defines______________________________________________________________________
+#define PORT_INPUT 2000
+#define PORT_OUTPUT 2001
+#define IP_WAFFLE "192.168.20"
+#define IP_VM "192.168.1.5"
+#define IP_LAPTOP "192.168.1.1"
+#define IP_XYZ_ROUTER "192.168.1.1"
+#define IP_MATTS_LAPTOP "192.168.2.20"
+#define IP_JACKAL "192.168.2.22"
+
+// Globals______________________________________________________________________
 const int _port_num = 2000;
 const int _loop_rate = 1;       // rate for the main loop to cycle through in Hz
 
 
-// Code____________________________________________________________________________
+// Code_________________________________________________________________________
 
 
 //void ParseTrimbleAccessMessage (string input_ta_msg,
@@ -42,6 +55,24 @@ void CalculateHeadingFromPosition ()
 }
 
 
+void TestTcpClientWithGoogle ()
+{
+  ROS_INFO("Testing TCP interaction by pinging Google.com");
+  tcp_client c;
+  string host = "google.com";
+
+  //connect to host
+  c.conn(host , 80);
+
+  //send some data
+  c.send_data("GET / HTTP/1.1\r\n\r\n");
+
+  //receive and echo reply
+  cout<<"----------------------------\n\n";
+  cout<<c.receive(1024);
+  cout<<"\n\n----------------------------\n\n";
+}
+
 
 
 int main(int argc, char **argv)
@@ -56,6 +87,8 @@ int main(int argc, char **argv)
   string latest_ta_position;
   nav_msgs::Odometry prev_odom_msg;
   nav_msgs::Odometry latest_odom_msg;
+
+  TestTcpClientWithGoogle();
 
   // Enter into a loop, consistently polling TA for positions, only exits
   // when "Ctrl + C" is pressed
