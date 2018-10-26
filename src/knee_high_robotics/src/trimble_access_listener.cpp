@@ -26,6 +26,22 @@ const int _loop_rate = 1;       // rate for the main loop to cycle through in Hz
 //}
 
 
+/* Takes in two nav_msgs::Odometry messages and assigns a heading to the
+ * second input, based on the difference in position of the two
+ *
+ */
+void CalculateHeadingFromPosition ()
+{
+
+
+
+  /* TODO
+   * Apply a threshold and return
+   *
+   */
+}
+
+
 
 
 int main(int argc, char **argv)
@@ -38,6 +54,7 @@ int main(int argc, char **argv)
   ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odometry/measured", 1000);
   
   string latest_ta_position;
+  nav_msgs::Odometry prev_odom_msg;
   nav_msgs::Odometry latest_odom_msg;
 
   // Enter into a loop, consistently polling TA for positions, only exits
