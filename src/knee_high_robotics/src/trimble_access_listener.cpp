@@ -1,19 +1,22 @@
-//// Includes____________________________________________________________________________
-//#include "ros/ros.h"
-//#include "std_msgs/String.h"
-//#include "nav_msgs/Odometry.h"
-//#include "tf/tfMessage.h"
-//#include "sensor_msgs/Imu.h"
-//#include <tf/transform_broadcaster.h>
-//#include "geometry_msgs/TransformStamped.h"
-//#include <sstream>
+// Includes____________________________________________________________________________
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include "nav_msgs/Odometry.h"
+#include "tf/tfMessage.h"
+#include "sensor_msgs/Imu.h"
+#include <tf/transform_broadcaster.h>
+#include "geometry_msgs/TransformStamped.h"
+#include <sstream>
 
-//// Globals____________________________________________________________________________
-//string _default_imu_topic = "imu/data";   // this will be /microstrain_imu/data/enu on jackal
-//sensor_msgs::Imu _latest_imu_msg;
+// Setup namespaces_____________________________________________________________
+using namespace std;
+
+// Globals____________________________________________________________________________
+string _default_imu_topic = "imu/data";   // this will be /microstrain_imu/data/enu on jackal
+sensor_msgs::Imu _latest_imu_msg;
 
 
-//// Code____________________________________________________________________________
+// Code____________________________________________________________________________
 
 
 
@@ -40,8 +43,10 @@
 
 
 
-//int main(int argc, char **argv)
-//{
+int main(int argc, char **argv)
+{
+  cout << "Yay" << endl;
+
 //  // Set up ROS node, including publishers and subscribers
 //  ros::init(argc, argv, "trimble_access_listener");
 //  ros::NodeHandle nh("~");
@@ -77,5 +82,5 @@
 //  // the node is shut down with "Ctrl+C"
 //  ros::spin();
 
-//  return 0;
-//}
+  return 0;
+}

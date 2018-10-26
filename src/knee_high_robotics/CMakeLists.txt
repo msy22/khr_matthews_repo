@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(robot_navigator)
+project(knee_high_robotics)
 
 ## Compile as C++11, supported in ROS Kinetic and newer (also works w/ Indigo)
 add_definitions(-std=c++11)
@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## The INCLUDE_DIRS and LIBRARIES stuff is mostly for exporting purposes
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES robot_navigator
+  LIBRARIES knee_high_robotics
 #  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -31,10 +31,12 @@ include_directories(
 )
 
 
-# Executables
-add_executable(robot_navigator src/robot_navigator.cpp)
+# Executables (.cpp files won't be compiled properly without these lines)
+add_executable(robot_navigator         src/robot_navigator.cpp)
+add_executable(trimble_access_listener src/trimble_access_listener.cpp)
 
 
 # Linking
-target_link_libraries(robot_navigator ${catkin_LIBRARIES})
+target_link_libraries(robot_navigator         ${catkin_LIBRARIES})
+target_link_libraries(trimble_access_listener ${catkin_LIBRARIES})
 

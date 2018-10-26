@@ -1,21 +1,21 @@
-//// Includes_____________________________________________________________________
-//#include <ros/ros.h>
-//#include <std_msgs/Bool.h>
-//#include <move_base_msgs/MoveBaseAction.h>
-//#include <actionlib/client/simple_action_client.h>
-//#include <nav_msgs/Odometry.h>
-//#include <sensor_msgs/Imu.h>
-//#include <geometry_msgs/Twist.h>
-//#include <geometry_msgs/Transform.h>
-//#include <geometry_msgs/TransformStamped.h>
+// Includes_____________________________________________________________________
+#include <ros/ros.h>
+#include <std_msgs/Bool.h>
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Transform.h>
+#include <geometry_msgs/TransformStamped.h>
 
-//#include <vector>
-//#include <string>                             // stod
-//#include <cstdio>
-//#include <cstring>
+#include <vector>
+#include <string>                             // stod
+#include <cstdio>
+#include <cstring>
 
-//// Setup namespaces_____________________________________________________________
-//using namespace std;
+// Setup namespaces_____________________________________________________________
+using namespace std;
 
 
 //// Global Constants_____________________________________________________________
@@ -49,8 +49,9 @@
 //}
 
 
-//int main(int argc, char **argv)
-//{
+int main(int argc, char **argv)
+{
+  cout << "Yay" << endl;
 //  // Setup ROS node, including publishers and subscribers
 //  ros::init(argc, argv, "tool_actuator");
 //  ros::NodeHandle nh("~");
@@ -67,5 +68,5 @@
 //  // the node is shut down with "Ctrl+C"
 //  ros::spin();
 
-//  return 0;
-//}
+  return 0;
+}
