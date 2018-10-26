@@ -14,6 +14,9 @@
 #include <cstdio>
 #include <cstring>
 
+// Custom libraries we've written for the Hackathon
+#include <knee_high_robotics/tcp_client_class.h>
+
 // Setup namespaces_____________________________________________________________
 using namespace std;
 

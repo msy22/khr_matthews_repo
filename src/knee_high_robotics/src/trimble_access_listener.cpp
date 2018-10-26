@@ -123,6 +123,7 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
   // split the message from one string into a vector of floats
   vector<float> split_message;
   GetLastCompleteMessage(input_ta_msg, input_ta_msg);
+  cout << input_ta_msg << endl;
   SplitStringOfNumbers(input_ta_msg, split_message);
 
   // Fill out header details
@@ -194,8 +195,8 @@ int main(int argc, char **argv)
     // Get a message from Trimble Access
     latest_ta_position.clear();
     latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
-    cout << latest_ta_position << endl;
-    //ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
+    //cout << latest_ta_position << endl;
+    ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
 
     // Publish the odometry
     ROS_INFO("Spinning, publishing a blank odometry msgs");
