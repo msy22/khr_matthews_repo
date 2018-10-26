@@ -41,15 +41,25 @@ const float _heading_from_position_threshold = 0.05; // 5 cm
 void SplitStringOfNumbers (string string_to_be_split,
                            vector<float>& split_string)
 {
+  string delimiter = ",";
+  size_t pos = 0;
   string substr;
-  stringstream ss(string_to_be_split);
 
-  while(ss.good())
+  while ((pos = string_to_be_split.find(delimiter)) != string::npos)
   {
-    getline(ss, substr, ',');
-    boost::algorithm::trim(substr);                   // Remove ALL whitespaces
-    split_string.push_back(atof(substr.c_str()));     // converts to float
+      substr = string_to_be_split.substr(0, pos);
+      boost::algorithm::trim(substr);                  // Remove ALL whitespaces
+
+      //cout << substr << endl;
+      string_to_be_split.erase(0, pos + delimiter.length());
   }
+
+//  while(ss.good())
+//  {
+//    getline(ss, substr, ',');
+//    boost::algorithm::trim(substr);                   // Remove ALL whitespaces
+//    split_string.push_back(atof(substr.c_str()));     // converts to float
+//  }
 }
 
 
@@ -57,17 +67,21 @@ void SplitStringOfNumbers (string string_to_be_split,
 void GetLastCompleteMessage (string& str_in,
                              string& str_out)
 {
+  string delimiter = ";";
+  size_t pos = 0;
   string substr;
-  stringstream ss(str_in);
+  cout << "str_in: " << str_in << endl;
 
-  while(ss.good())
+  while ((pos = str_in.find(delimiter)) != string::npos)
   {
-    getline(ss, substr, ';');              // Cut out str up to next delimiter
-    boost::algorithm::trim(substr);        // Remove ALL whitespaces
+      substr = str_in.substr(0, pos);
+      boost::algorithm::trim(substr);                  // Remove ALL whitespaces
+      cout << substr << endl;
+      str_in.erase(0, pos + delimiter.length());
   }
 
   // We should now have the last complete string before the last delimiter
-  str_out = substr.c_str();
+  //str_out = substr;
 }
 
 
@@ -122,9 +136,18 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
 
   // split the message from one string into a vector of floats
   vector<float> split_message;
-  GetLastCompleteMessage(input_ta_msg, input_ta_msg);
-  cout << input_ta_msg << endl;
+  string processed_ta_msg;
+  cout << "input_ta_msg: " << input_ta_msg << endl;
+  //GetLastCompleteMessage(input_ta_msg, processed_ta_msg);
+  //cout << processed_ta_msg << endl;
+  cout << "Before SplitStringOfNumbers" << endl;
   SplitStringOfNumbers(input_ta_msg, split_message);
+  cout << "After SplitStringOfNumbers" << endl;
+
+  for (int i = 0; i < split_message.size(); i++)
+  {
+    cout << split_message[i] << endl;
+  }
 
   // Fill out header details
   latest_odom.header.frame_id = "odom";
@@ -195,7 +218,7 @@ int main(int argc, char **argv)
     // Get a message from Trimble Access
     latest_ta_position.clear();
     latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
-    //cout << latest_ta_position << endl;
+    cout << "latest_ta_postion: " << latest_ta_position << endl;
     ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
 
     // Publish the odometry
