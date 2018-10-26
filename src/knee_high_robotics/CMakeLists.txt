@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   roslaunch
   actionlib
   move_base_msgs
+  tf
 )
 
 ## Declare a catkin package - necessary otherwise .cpp file won't be callable

@@ -29,7 +29,7 @@ using namespace std;
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 // Global Constants_____________________________________________________________
-const string _default_waypoint_filepath = "/home/matt/khr_matthews_repo/";
+const string _default_waypoint_filepath = "/home/administrator/robot_ws/src/knee_high_robotics/waypoint_files/";
 //const std::string &in_filename = {"/catkin_ws/LOAM_ROS_testing/move.csv"};
 const string _default_waypoint_filename = "testWayPoints.csv";
 bool _tool_actuated = false;

@@ -30,7 +30,7 @@ using namespace std;
 #define BUFF_LENGTH 512
 
 // Globals______________________________________________________________________
-const int _loop_rate = 1;       // rate for the main loop to cycle through in Hz
+const int _loop_rate = 5;       // rate for the main loop to cycle through in Hz
 const float _heading_from_position_threshold = 0.05; // 5 cm
 
 
@@ -136,10 +136,10 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
   //cout << processed_ta_msg << endl;
   SplitStringOfNumbers(last_ta_msg, split_message);
 
-  for (int i = 0; i < split_message.size(); i++)
-  {
-    cout << split_message[i] << endl;
-  }
+//  for (int i = 0; i < split_message.size(); i++)
+//  {
+//    cout << split_message[i] << endl;
+//  }
 
   // Fill out header details
   latest_odom.header.frame_id = "odom";
@@ -147,16 +147,14 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
   latest_odom.header.stamp = ros::Time::now();
 
   // Fill out XYZ coordinate details
-  latest_odom.pose.pose.position.x = split_message[0];
-  latest_odom.pose.pose.position.y = split_message[1];
+  latest_odom.pose.pose.position.x = split_message[1];
+  latest_odom.pose.pose.position.y = split_message[0];
   latest_odom.pose.pose.position.z = 0.0;
 
   // Fill out the orientation details based on the difference in position
   // between this position and the last position
   float heading = 0;
-  cout << "Heading before: " << heading << endl;
   CalculateHeadingFromPosition(latest_odom, prev_odom, heading);
-  cout << "Heading after: " << heading << endl;
   tf::Quaternion quat = tf::createQuaternionFromRPY(0,0,heading);
   latest_odom.pose.pose.orientation.x = quat[0];
   latest_odom.pose.pose.orientation.y = quat[1];
@@ -193,9 +191,12 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(_loop_rate);
   ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odometry/measured", 1000);
 
+  // Set up various containers for ROS messages
   string latest_ta_position;
   nav_msgs::Odometry prev_odom_msg;
   nav_msgs::Odometry latest_odom_msg;
+  tf::TransformBroadcaster br;
+  tf::Transform transform;
 
   // Test the TCP client by pinging google (i.e. uncomment to debug tcp comms)
   // TestTcpClientWithGoogle();
@@ -214,6 +215,17 @@ int main(int argc, char **argv)
     latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
     //cout << "latest_ta_postion: " << latest_ta_position << endl;
     ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
+
+    // Fill in tf frame so it is identical to the odometry, then broadcast it
+    transform.setOrigin(tf::Vector3(latest_odom_msg.pose.pose.position.x,
+                                    latest_odom_msg.pose.pose.position.y,
+                                    latest_odom_msg.pose.pose.position.z));
+    transform.setRotation(tf::Quaternion(latest_odom_msg.pose.pose.orientation.x,
+                                         latest_odom_msg.pose.pose.orientation.y,
+                                         latest_odom_msg.pose.pose.orientation.z,
+                                         latest_odom_msg.pose.pose.orientation.w));
+    br.sendTransform(tf::StampedTransform(transform, latest_odom_msg.header.stamp,
+                                          "odom", "base_link"));
 
     // Publish the odometry
     ROS_INFO("Spinning, publishing a blank odometry msgs");
