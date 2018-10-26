@@ -23,11 +23,11 @@ using namespace std;
 #define PORT_OUTPUT 2001
 #define IP_WAFFLE "192.168.20"
 #define IP_VM "192.168.1.5"
-#define IP_LAPTOP "192.168.1.1"
+#define IP_LAPTOP "172.16.12.39"
 #define IP_XYZ_ROUTER "192.168.1.1"
 #define IP_MATTS_LAPTOP "192.168.2.20"
 #define IP_JACKAL "192.168.2.22"
-#define BUFF_LENGTH 1024
+#define BUFF_LENGTH 512
 
 // Globals______________________________________________________________________
 const int _loop_rate = 1;       // rate for the main loop to cycle through in Hz
@@ -50,6 +50,24 @@ void SplitStringOfNumbers (string string_to_be_split,
     boost::algorithm::trim(substr);                   // Remove ALL whitespaces
     split_string.push_back(atof(substr.c_str()));     // converts to float
   }
+}
+
+
+
+void GetLastCompleteMessage (string& str_in,
+                             string& str_out)
+{
+  string substr;
+  stringstream ss(str_in);
+
+  while(ss.good())
+  {
+    getline(ss, substr, ';');              // Cut out str up to next delimiter
+    boost::algorithm::trim(substr);        // Remove ALL whitespaces
+  }
+
+  // We should now have the last complete string before the last delimiter
+  str_out = substr.c_str();
 }
 
 
@@ -104,6 +122,7 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
 
   // split the message from one string into a vector of floats
   vector<float> split_message;
+  GetLastCompleteMessage(input_ta_msg, input_ta_msg);
   SplitStringOfNumbers(input_ta_msg, split_message);
 
   // Fill out header details
@@ -173,6 +192,7 @@ int main(int argc, char **argv)
   while (ros::ok())
   {
     // Get a message from Trimble Access
+    latest_ta_position.clear();
     latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
     cout << latest_ta_position << endl;
     //ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
