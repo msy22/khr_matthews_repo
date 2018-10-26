@@ -8,48 +8,32 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/TransformStamped.h>
-
 #include <nav_msgs/Odometry.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
-
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include <string>                             // stod
 #include <cstdio>
 #include <cstring>
-
-
-//extra includes
 #include <sensor_msgs/PointCloud2.h>
-//#include <pcl_conversions/pcl_conversions.h>
-//#include <pcl/point_cloud.h>
-//#include <pcl/point_types.h>
-//#include <string>
 #include <iostream>
-//#include <pcl/filters/voxel_grid.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-
 #include <sensor_msgs/point_cloud_conversion.h>
-//#include <pcl_ros/transforms.h>
-
-//#include <pcl/io/ply_io.h>
-//#include <pcl/io/pcd_io.h>
 
 // Setup namespaces_____________________________________________________________
 using namespace std;
 
+// Typedefs_____________________________________________________________________
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+
 // Global Constants_____________________________________________________________
-const string _default_waypoint_filepath = "./src/robot_navigator/";
+const string _default_waypoint_filepath = "/home/matt/khr_matthews_repo/";
 //const std::string &in_filename = {"/catkin_ws/LOAM_ROS_testing/move.csv"};
-const string _default_waypoint_filename = "wayPoints.csv";
+const string _default_waypoint_filename = "testWayPoints.csv";
 bool _tool_actuated = false;
 bool _job_completed = false;
-
 
 // Code_________________________________________________________________________
 
@@ -87,24 +71,17 @@ void CallbackJobCompleted(std_msgs::Bool job_msg)
 
 
 
-void LoadWaypointList (vector<Waypoint>& waypoint_list_to_fill, string filepath_to_waypoints)
+void LoadWaypointList (vector<Waypoint>& waypoint_list_to_fill,
+                       string filepath_to_waypoints)
 {
-
-
-    const int x_id = 2;
-    const int y_id = 3;
-    const int yaw_id = 4;
-    const int tStamp_id = 1;
-    cout<<filepath_to_waypoints<<endl;
+    ROS_INFO("Loading waypoints at: %s", filepath_to_waypoints.c_str());
     ifstream in(filepath_to_waypoints.c_str());
     if (!in.is_open())
     {
-        cout<<"Error loading file\n";
-        //return -1;
+        ROS_ERROR("Error loading file");
     }
 
     int n_lines = 0;
-
     string line;
     vector< string > vec;
 
@@ -112,13 +89,12 @@ void LoadWaypointList (vector<Waypoint>& waypoint_list_to_fill, string filepath_
     getline(in, line);
     cout << line << endl;
     getchar();
+
     while (in.eof() != 1 )
     {
-
-        float X, Y, yaw;
+        //Create the point
         float tStamp;
         Waypoint newPoint;
-        //Create the point
         cout<<line<<endl;
         getline(in,line,',');
         tStamp = atof(line.c_str());//atof(vec[tStamp_id-1].c_str());
@@ -128,10 +104,9 @@ void LoadWaypointList (vector<Waypoint>& waypoint_list_to_fill, string filepath_
         newPoint.y = atof(line.c_str());//atof(vec[y_id-1].c_str());
         getline(in,line);
         newPoint.yaw = atof(line.c_str());//atof(vec[yaw_id-1].c_str());
-
         waypoint_list_to_fill.push_back(newPoint);
-        cout<<"timeNow : "<<tStamp<<", X : "<< newPoint.x<<", Y : "<<newPoint.y<<", yaw : "<<newPoint.yaw<<endl;
-
+        cout<<"timeNow : "<<tStamp<<", X : "<< newPoint.x<<", Y : "<<newPoint.y
+            <<", yaw : "<<newPoint.yaw<<endl;
     }
 }
 
@@ -160,14 +135,14 @@ void NavigateRobotToWaypoints (vector<Waypoint>& waypoints_list,
     goal.target_pose.pose.orientation.w = goal_quat[3];
 
     // Send goal to move_base
-    //ROS_INFO("Sending goal " + wp.id);
+    ROS_INFO("Sending goal %i", wp.id);
     ac.sendGoal(goal);
 
     // Wait for the robot to get there then do something
     ac.waitForResult();
     if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-      //ROS_INFO("Hooray, successfully reached waypoint " + wp.id);
+      ROS_INFO("Hooray, successfully reached waypoint %i", wp.id);
       // Now send the signal to actuate the tool
       std_msgs::Bool actuate_tool; actuate_tool.data = true;
       tool_publisher.publish(actuate_tool);
@@ -178,7 +153,7 @@ void NavigateRobotToWaypoints (vector<Waypoint>& waypoints_list,
     }
     else
     {
-      //ROS_INFO("Failed to reach waypoint " + wp.id + " for some reason");
+      ROS_INFO("Failed to reach waypoint %i for some reason", wp.id);
       /* TODO
        * Deal with the failure appropriately (re-send or move to next)
        */

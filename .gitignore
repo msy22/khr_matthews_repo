@@ -40,3 +40,5 @@ devel/
 *.txt~
 
 *.autosave
+
+*.csv~
