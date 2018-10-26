@@ -23,6 +23,7 @@ using namespace std;
 #define IP_XYZ_ROUTER "192.168.1.1"
 #define IP_MATTS_LAPTOP "192.168.2.20"
 #define IP_JACKAL "192.168.2.22"
+#define BUFF_LENGTH
 
 // Globals______________________________________________________________________
 const int _port_num = 2000;
@@ -58,11 +59,10 @@ void CalculateHeadingFromPosition ()
 void TestTcpClientWithGoogle ()
 {
   ROS_INFO("Testing TCP interaction by pinging Google.com");
-  tcp_client c;
-  string host = "google.com";
 
   //connect to host
-  c.conn(host , 80);
+  tcp_client c;
+  c.conn("google.com" , 80);
 
   //send some data
   c.send_data("GET / HTTP/1.1\r\n\r\n");
@@ -88,7 +88,11 @@ int main(int argc, char **argv)
   nav_msgs::Odometry prev_odom_msg;
   nav_msgs::Odometry latest_odom_msg;
 
+  // Test the TCP client by pinging google, then create a TCP connection to
+  // Trimble Access
   TestTcpClientWithGoogle();
+  tcp_client trimble_tcp_client;
+  trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
 
   // Enter into a loop, consistently polling TA for positions, only exits
   // when "Ctrl + C" is pressed

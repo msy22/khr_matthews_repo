@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   roslaunch
+  actionlib
+  move_base_msgs
 )
 
 ## Declare a catkin package - necessary otherwise .cpp file won't be callable
