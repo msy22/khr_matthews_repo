@@ -20,11 +20,11 @@ sensor_msgs::Imu _latest_imu_msg;
 
 
 
-////void CallbackImu (const sensor_msgs::Imu imu_msg)
-////{
-////  // Just update the global storage for the IMU message
-////  _latest_imu_msg = imu_msg;
-////}
+void CallbackImu (const sensor_msgs::Imu imu_msg)
+{
+  // Just update the global storage for the IMU message
+  _latest_imu_msg = imu_msg;
+}
 
 
 
@@ -45,14 +45,12 @@ sensor_msgs::Imu _latest_imu_msg;
 
 int main(int argc, char **argv)
 {
-  cout << "Yay" << endl;
-
-//  // Set up ROS node, including publishers and subscribers
-//  ros::init(argc, argv, "trimble_access_listener");
-//  ros::NodeHandle nh("~");
-//  ros::Rate loop_rate(10);      // rate for the main loop to cycle through in Hz
-//  ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odometry/measured", 1000);
-//  //ros::Subscriber sub = nh.subscribe("imu/data", 10, CallbackImu);
+  // Set up ROS node, including publishers and subscribers
+  ros::init(argc, argv, "trimble_access_listener");
+  ros::NodeHandle nh("~");
+  ros::Rate loop_rate(10);      // rate for the main loop to cycle through in Hz
+  ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odometry/measured", 1000);
+  //ros::Subscriber sub = nh.subscribe("imu/data", 10, CallbackImu);
   
 //  string latest_ta_position;
 //  nav_msg::Odometry latest_odom_msg;
@@ -78,9 +76,9 @@ int main(int argc, char **argv)
 //    loop_rate.sleep();
 //  }
 
-//  // Sit here waiting, allowing the callbacks to run and only ending when
-//  // the node is shut down with "Ctrl+C"
-//  ros::spin();
+  // Sit here waiting, allowing the callbacks to run and only ending when
+  // the node is shut down with "Ctrl+C"
+  ros::spin();
 
   return 0;
 }
