@@ -49,17 +49,10 @@ void SplitStringOfNumbers (string string_to_be_split,
   {
       substr = string_to_be_split.substr(0, pos);
       boost::algorithm::trim(substr);                  // Remove ALL whitespaces
-
-      //cout << substr << endl;
       string_to_be_split.erase(0, pos + delimiter.length());
+      split_string.push_back(atof(substr.c_str()));
   }
-
-//  while(ss.good())
-//  {
-//    getline(ss, substr, ',');
-//    boost::algorithm::trim(substr);                   // Remove ALL whitespaces
-//    split_string.push_back(atof(substr.c_str()));     // converts to float
-//  }
+  split_string.push_back(atof(string_to_be_split.c_str()));
 }
 
 
@@ -70,18 +63,18 @@ void GetLastCompleteMessage (string& str_in,
   string delimiter = ";";
   size_t pos = 0;
   string substr;
-  cout << "str_in: " << str_in << endl;
+  //cout << "str_in: " << str_in << endl;
 
   while ((pos = str_in.find(delimiter)) != string::npos)
   {
       substr = str_in.substr(0, pos);
       boost::algorithm::trim(substr);                  // Remove ALL whitespaces
-      cout << substr << endl;
+      //cout << substr << endl;
       str_in.erase(0, pos + delimiter.length());
   }
 
   // We should now have the last complete string before the last delimiter
-  //str_out = substr;
+  str_out = substr.c_str();
 }
 
 
@@ -93,14 +86,15 @@ void GetLastCompleteMessage (string& str_in,
  */
 void CalculateHeadingFromPosition (nav_msgs::Odometry& latest_odom,
                                    nav_msgs::Odometry& prev_odom,
-                                   float heading)
+                                   float& heading)
 {
   // Calculate the difference between current and previous position
   float delta_x = latest_odom.pose.pose.position.x -
                   prev_odom.pose.pose.position.x;
   float delta_y = latest_odom.pose.pose.position.y -
                   prev_odom.pose.pose.position.y;
-  float dist_moved = sqrt(pow(2, delta_x) + pow(delta_y,2));
+  float dist_moved = sqrt(pow(delta_x, 2) + pow(delta_y,2));
+  cout << "Dist moved: " << dist_moved << endl;
 
   // if the robot has moved far enough, use the difference to calculate the
   // heading, if not assume the robot has the same heading as previous position
@@ -110,7 +104,7 @@ void CalculateHeadingFromPosition (nav_msgs::Odometry& latest_odom,
   }
   else
   {
-    ROS_WARN("Robot didn't move far enough, copying previous orientation");
+    ROS_INFO("Robot didn't move far enough, copying previous orientation");
     heading = tf::getYaw(prev_odom.pose.pose.orientation);
   }
 }
@@ -132,17 +126,15 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
    * format "x,y,yaw"
    */
 
-  ROS_INFO("Received position from Trimble Access: %s", input_ta_msg.c_str());
+  //ROS_INFO("Received position from Trimble Access: %s", input_ta_msg.c_str());
 
   // split the message from one string into a vector of floats
   vector<float> split_message;
-  string processed_ta_msg;
-  cout << "input_ta_msg: " << input_ta_msg << endl;
-  //GetLastCompleteMessage(input_ta_msg, processed_ta_msg);
+  string last_ta_msg;
+  //cout << "input_ta_msg: " << input_ta_msg << endl;
+  GetLastCompleteMessage(input_ta_msg, last_ta_msg);
   //cout << processed_ta_msg << endl;
-  cout << "Before SplitStringOfNumbers" << endl;
-  SplitStringOfNumbers(input_ta_msg, split_message);
-  cout << "After SplitStringOfNumbers" << endl;
+  SplitStringOfNumbers(last_ta_msg, split_message);
 
   for (int i = 0; i < split_message.size(); i++)
   {
@@ -161,8 +153,10 @@ void ParseTrimbleAccessMessage (string input_ta_msg,
 
   // Fill out the orientation details based on the difference in position
   // between this position and the last position
-  float heading;
+  float heading = 0;
+  cout << "Heading before: " << heading << endl;
   CalculateHeadingFromPosition(latest_odom, prev_odom, heading);
+  cout << "Heading after: " << heading << endl;
   tf::Quaternion quat = tf::createQuaternionFromRPY(0,0,heading);
   latest_odom.pose.pose.orientation.x = quat[0];
   latest_odom.pose.pose.orientation.y = quat[1];
@@ -218,7 +212,7 @@ int main(int argc, char **argv)
     // Get a message from Trimble Access
     latest_ta_position.clear();
     latest_ta_position = trimble_tcp_client.receive(BUFF_LENGTH);
-    cout << "latest_ta_postion: " << latest_ta_position << endl;
+    //cout << "latest_ta_postion: " << latest_ta_position << endl;
     ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
 
     // Publish the odometry
