@@ -148,7 +148,7 @@ void NavigateRobotToWaypoints (vector<Waypoint>& waypoints_list,
     // Create move goal
     Waypoint wp;
     wp = waypoints_list[i];
-    goal.target_pose.header.frame_id = "map";
+    goal.target_pose.header.frame_id = "odom";
     goal.target_pose.header.stamp = ros::Time::now();
     goal.target_pose.pose.position.x = wp.x;
     goal.target_pose.pose.position.y = wp.y;
