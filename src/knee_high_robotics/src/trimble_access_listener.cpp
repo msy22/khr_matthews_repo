@@ -11,6 +11,8 @@
 #include <sstream>                                  // stringstream
 #include <boost/algorithm/string/trim.hpp>          // trim
 #include <math.h>                                   // atan2
+#include <iostream>
+#include <fstream>
 
 // Custom libraries we've written for the Hackathon
 #include <knee_high_robotics/tcp_client_class.h>
@@ -28,6 +30,7 @@ using namespace std;
 #define IP_MATTS_LAPTOP "192.168.2.20"
 #define IP_JACKAL "192.168.2.22"
 #define BUFF_LENGTH 512
+
 
 // Globals______________________________________________________________________
 const int _loop_rate = 5;       // rate for the main loop to cycle through in Hz
@@ -94,7 +97,7 @@ void CalculateHeadingFromPosition (nav_msgs::Odometry& latest_odom,
   float delta_y = latest_odom.pose.pose.position.y -
                   prev_odom.pose.pose.position.y;
   float dist_moved = sqrt(pow(delta_x, 2) + pow(delta_y,2));
-  cout << "Dist moved: " << dist_moved << endl;
+  //cout << "Dist moved: " << dist_moved << endl;
 
   // if the robot has moved far enough, use the difference to calculate the
   // heading, if not assume the robot has the same heading as previous position
@@ -104,7 +107,7 @@ void CalculateHeadingFromPosition (nav_msgs::Odometry& latest_odom,
   }
   else
   {
-    ROS_INFO("Robot didn't move far enough, copying previous orientation");
+    //ROS_INFO("Robot didn't move far enough, copying previous orientation");
     heading = tf::getYaw(prev_odom.pose.pose.orientation);
   }
 }
@@ -197,6 +200,11 @@ int main(int argc, char **argv)
   nav_msgs::Odometry latest_odom_msg;
   tf::TransformBroadcaster br;
   tf::Transform transform;
+  float heading;
+
+  // Create CSV file
+  std::ofstream csvFile;
+  csvFile.open ("sx10_positions.csv");
 
   // Test the TCP client by pinging google (i.e. uncomment to debug tcp comms)
   // TestTcpClientWithGoogle();
@@ -227,8 +235,18 @@ int main(int argc, char **argv)
     br.sendTransform(tf::StampedTransform(transform, latest_odom_msg.header.stamp,
                                           "odom", "base_link"));
 
+    heading = tf::getYaw(latest_odom_msg.pose.pose.orientation);
+    ROS_INFO("Position from SX10: %f %f %f", latest_odom_msg.pose.pose.position.x,
+             latest_odom_msg.pose.pose.position.y, heading);
+
+    // Save data to csv
+    csvFile << latest_odom_msg.header.stamp << ","
+            << latest_odom_msg.pose.pose.position.x << ","
+            << latest_odom_msg.pose.pose.position.y << ","
+            << latest_odom_msg.pose.pose.position.z << endl;
+
     // Publish the odometry
-    ROS_INFO("Spinning, publishing a blank odometry msgs");
+    //ROS_INFO("Spinning, publishing a blank odometry msgs");
     odom_publisher.publish(latest_odom_msg);
     prev_odom_msg = latest_odom_msg;                // Now update prev odom msg
 
@@ -242,6 +260,7 @@ int main(int argc, char **argv)
     ros::spinOnce();
     loop_rate.sleep();
   }
+  csvFile.close();
 
   // Sit here waiting, allowing the callbacks to run and only ending when
   // the node is shut down with "Ctrl+C"

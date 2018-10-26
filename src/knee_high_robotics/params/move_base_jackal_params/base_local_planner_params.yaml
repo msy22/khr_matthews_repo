@@ -15,8 +15,8 @@ TrajectoryPlannerROS:
   escape_vel: -0.5
 
   # Goal Tolerance Parameters
-  yaw_goal_tolerance: 0.157             # clearpath default= 0.157, default=0.05
-  xy_goal_tolerance: 0.25               # clearpath default= 0.35, default= 0.1
+  yaw_goal_tolerance: 0.314             # clearpath default= 0.157, default=0.05
+  xy_goal_tolerance: 0.8                # clearpath default= 0.35, default= 0.1
   latch_xy_goal_tolerance: false
 
   # Forward Simulation Parameters
@@ -38,7 +38,7 @@ TrajectoryPlannerROS:
   heading_scoring_timestep: 0.8         # How far to look ahead in time in seconds along the simulated trajectory when using heading scoring (double, default: 0.8)
   dwa: true                             # Whether to use the Dynamic Window Approach (DWA)_ or whether to use Trajectory Rollout
   simple_attractor: false
-  publish_cost_grid_pc: true 
+  publish_cost_grid_pc: false 
 
   # Oscillation Prevention Parameters
   oscillation_reset_dist: 0.05          # How far the robot must travel in meters before oscillation flags are reset (double, default: 0.05)

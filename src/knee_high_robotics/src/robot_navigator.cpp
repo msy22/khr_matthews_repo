@@ -21,6 +21,8 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <sensor_msgs/point_cloud_conversion.h>
+#include <iostream>
+#include <fstream>
 
 // Setup namespaces_____________________________________________________________
 using namespace std;
@@ -123,6 +125,7 @@ void NavigateRobotToWaypoints (vector<Waypoint>& waypoints_list,
     // Create move goal
     Waypoint wp;
     wp = waypoints_list[i];
+    wp.id = i;
     goal.target_pose.header.frame_id = "odom";
     goal.target_pose.header.stamp = ros::Time::now();
     goal.target_pose.pose.position.x = wp.x;
