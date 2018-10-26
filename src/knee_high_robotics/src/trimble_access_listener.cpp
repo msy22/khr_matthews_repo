@@ -160,14 +160,15 @@ int main(int argc, char **argv)
   nav_msgs::Odometry prev_odom_msg;
   nav_msgs::Odometry latest_odom_msg;
 
-  // Test the TCP client by pinging google, then create a TCP connection to
-  // Trimble Access
-  TestTcpClientWithGoogle();
+  // Test the TCP client by pinging google (i.e. uncomment to debug tcp comms)
+  // TestTcpClientWithGoogle();
+
+  // Create the TCP socket to listen to positions from Trimble Access
   // Note: the "conn" function will hang if no connection can be made
 //  tcp_client trimble_tcp_client;
 //  trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
 
-  // Enter into a loop, consistently polling TA for positions, only exits
+  // Enter into a loop, consistently polling TA for positions, only exit
   // when "Ctrl + C" is pressed
   while (ros::ok())
   {
@@ -176,8 +177,9 @@ int main(int argc, char **argv)
     //ParseTrimbleAccessMessage(latest_ta_position, latest_odom_msg, prev_odom_msg);
 
     // Publish the odometry
-    ROS_INFO("Spinning at 1Hz, publishing a blank odometry msgs");
+    ROS_INFO("Spinning, publishing a blank odometry msgs");
     odom_publisher.publish(latest_odom_msg);
+    prev_odom_msg = latest_odom_msg;                // Now update prev odom msg
 
     /* TODO:
      * Publish the /odom -> /base_link transform

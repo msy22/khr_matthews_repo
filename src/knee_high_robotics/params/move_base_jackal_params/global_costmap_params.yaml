@@ -1,0 +1,20 @@
+global_costmap:
+  global_frame: odom
+  robot_base_frame: base_link
+  update_frequency: 20
+  publish_frequency: 0.5
+  width: 120.0
+  height: 120.0
+  resolution: 0.05
+  origin_x: -60.0
+  origin_y: -60.0
+  static_map: true
+  rolling_window: false
+
+#  |----------------------------------------------------------------------|
+#  | IMPORTANT NOTE: The .yaml files in the "odom_nav_params" folder are  |
+#  |                 supposed to be used to launch a stand-alone version  |
+#  |                 of the move_base node, without gmapping. This allows |
+#  |                 move_base to use laser and odometry data, but does   |
+#  |                 not create a map that can be save and later recalled |
+#  |----------------------------------------------------------------------|

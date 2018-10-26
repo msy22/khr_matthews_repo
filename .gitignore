@@ -42,3 +42,7 @@ devel/
 *.autosave
 
 *.csv~
+
+*.yaml~
+
+*.launch~
