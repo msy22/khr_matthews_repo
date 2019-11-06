@@ -38,13 +38,15 @@ add_library(tcp_client_class     src/tcp_client_class.cpp)
 
 
 # Executables (.cpp files won't be compiled properly without these lines)
-add_executable(robot_navigator         src/robot_navigator.cpp)
-add_executable(trimble_access_listener src/trimble_access_listener.cpp)
-add_executable(tool_actuator           src/tool_actuator.cpp)
+add_executable(robot_navigator            src/robot_navigator.cpp)
+add_executable(trimble_access_listener    src/trimble_access_listener.cpp)
+add_executable(trimble_precision_listener src/trimble_precision_listener.cpp)
+add_executable(tool_actuator              src/tool_actuator.cpp)
 
 
 # Linking
-target_link_libraries(tcp_client_class        ${catkin_LIBRARIES})
-target_link_libraries(robot_navigator         ${catkin_LIBRARIES})
-target_link_libraries(trimble_access_listener ${catkin_LIBRARIES} tcp_client_class)
-target_link_libraries(tool_actuator           ${catkin_LIBRARIES} tcp_client_class)
+target_link_libraries(tcp_client_class           ${catkin_LIBRARIES})
+target_link_libraries(robot_navigator            ${catkin_LIBRARIES})
+target_link_libraries(trimble_access_listener    ${catkin_LIBRARIES} tcp_client_class)
+target_link_libraries(trimble_precision_listener ${catkin_LIBRARIES} tcp_client_class)
+target_link_libraries(tool_actuator              ${catkin_LIBRARIES} tcp_client_class)
