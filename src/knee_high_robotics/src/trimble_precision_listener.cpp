@@ -6,6 +6,7 @@
 #include "sensor_msgs/Imu.h"
 #include <tf/transform_broadcaster.h>
 #include "geometry_msgs/TransformStamped.h"
+#include "geometry_msgs/PoseStamped.h"
 #include <sys/socket.h>                             // socket
 #include <netinet/in.h>                             // Required for TCP comms
 #include <sstream>                                  // stringstream
@@ -25,10 +26,10 @@ using namespace std;
 #define PORT_OUTPUT 2001
 #define IP_WAFFLE "192.168.20"
 #define IP_VM "192.168.1.5"
-#define IP_LAPTOP "172.16.12.39"
+#define IP_LAPTOP "171.0.12.145"         // Address of laptop running the TA server default: 172.16.12.39"
 #define IP_XYZ_ROUTER "192.168.1.1"
-#define IP_MATTS_LAPTOP "192.168.2.20"
-#define IP_JACKAL "192.168.2.22"
+#define IP_MATTS_LAPTOP "192.168.2.20"  // Address of Linux laptop
+#define IP_JACKAL "192.168.2.22"        // WiFi address of Jackal
 #define BUFF_LENGTH 512
 
 
@@ -38,6 +39,7 @@ const float _heading_from_position_threshold = 0.05; // 5 cm
 
 
 // Code_________________________________________________________________________
+
 
 
 // Takes in a string of comma separated numbers and returns a vector of floats
@@ -59,55 +61,77 @@ void SplitStringOfNumbers (string string_to_be_split,
 }
 
 
-/* Reads in a string of characters which will contain several messages
- */
-void GetLastCompleteMessage (string& str_in,
-                             string& str_out)
+void ConstructOdometryMessage(string input_str,
+                              nav_msgs::Odometry& output_msg)
 {
-  string delimiter = ";";
-  size_t pos = 0;
-  string substr;
-  //cout << "str_in: " << str_in << endl;
+  vector<float> input_data;
+  SplitStringOfNumbers(input_str, input_data);
 
-  while ((pos = str_in.find(delimiter)) != string::npos)
-  {
-      substr = str_in.substr(0, pos);
-      boost::algorithm::trim(substr);                  // Remove ALL whitespaces
-      //cout << substr << endl;
-      str_in.erase(0, pos + delimiter.length());
-  }
-
-  // We should now have the last complete string before the last delimiter
-  str_out = substr.c_str();
+  // Fill out message details
+  output_msg.header.frame_id = "map";
+  output_msg.child_frame_id = "aux_gps"; // dirty hack because the prism is where the antenna was
+  output_msg.header.stamp = ros::Time::now();
+  output_msg.pose.pose.position.y = input_data[1];
+  output_msg.pose.pose.position.x = input_data[2];
+  output_msg.pose.pose.position.z = input_data[3];
+  output_msg.pose.pose.orientation.w = 1.0;
 }
 
 
 
-/* Takes in a comma-separated string "x,y,yaw" and turns this into a standard
- * ROS odometry message formatted according to this documentation:
- * http://docs.ros.org/melodic/api/nav_msgs/html/msg/Odometry.html
+void ConstructGoalMessage(string input_str,
+                          geometry_msgs::PoseStamped& output_msg)
+{
+  vector<float> input_data;
+  SplitStringOfNumbers(input_str, input_data);
+
+  // Fill out header details
+  output_msg.header.stamp = ros::Time::now();
+  output_msg.header.frame_id = "map";
+  output_msg.pose.position.y = input_data[1];
+  output_msg.pose.position.x = input_data[2];
+  output_msg.pose.position.z = input_data[3];
+  output_msg.pose.orientation.w = 1.0;
+}
+
+
+
+/* Takes in a comma-separated string that may contain multiple messages, and
+ * outputs the latest valid message of each type. For now we explicitly assume
+ * that every message is complete.
  */
-void ParseTrimblePrecisionMessage (string input_ta_msg,
+void ParseTrimblePrecisionMessage (string input_tp_msg,
                                    string& latest_goal,
                                    string& latest_position,
                                    string& latest_orientation)
 {
-  /* TODO:
-   * Check this is a position measurement and not a command message. For now the
-   * code implicitly assumes it is a measurement and contains floats in the
-   * format "x,y,yaw"
-   */
+  /* Split the message into semicolon separated messages. Any incomplete
+   * messages in the back end of the input string will automatically be ignored */
+  vector<string> messages;
+  string delimiter = ";";
+  size_t pos = 0;
+  string substr;
 
-  //ROS_INFO("Received position from Trimble Access: %s", input_ta_msg.c_str());
+  while ((pos = input_tp_msg.find(delimiter)) != string::npos)
+  {
+    substr = input_tp_msg.substr(0, pos+1);
+    boost::algorithm::trim(substr);
+    messages.push_back(substr);
+    input_tp_msg.erase(0, pos + delimiter.length());
+  }
 
-  // split the message from one string into a vector of floats
-  vector<float> split_message;
-  string last_ta_msg;
-  //cout << "input_ta_msg: " << input_ta_msg << endl;
-  GetLastCompleteMessage(input_ta_msg, last_ta_msg);
-  //cout << processed_ta_msg << endl;
-  SplitStringOfNumbers(last_ta_msg, split_message);
+  /* Allocate messages to the right strings. This method inherently means that
+     early messages are overwritten by later ones */
+  string cmd_type;
+  for (int i=0; i < messages.size(); i++)
+  {
+    cmd_type = messages[i][0];
+    if (cmd_type == "0") {latest_goal = messages[i];}
+    if (cmd_type == "1") {latest_position = messages[i];}
+    if (cmd_type == "2") {latest_orientation = messages[i];}
+  }
 }
+
 
 
 void TestTcpClientWithGoogle ()
@@ -131,15 +155,21 @@ void TestTcpClientWithGoogle ()
 
 int main(int argc, char **argv)
 {
-  // Set up ROS node, including publishers and subscribers
+  // Set up ROS node
   ros::init(argc, argv, "trimble_precison_listener");
   ROS_INFO("Setting up trimble_precision_listener");
   ros::NodeHandle nh;
   ros::Rate loop_rate(_loop_rate);
 
+  // Set up Publishers and subscribers
+  ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odometry/prism", 1000);
+  ros::Publisher goal_publisher = nh.advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 1000);
+
   // Set up various containers for ROS messages
   string latest_tp_message, latest_goal, latest_position, latest_orientation,
          previous_position, previous_goal, previous_orientation;
+  nav_msgs::Odometry latest_odom_msg;
+  geometry_msgs::PoseStamped latest_goal_msg;
 
   // Test the TCP client by pinging google (i.e. uncomment to debug tcp comms)
   //TestTcpClientWithGoogle();
@@ -149,33 +179,42 @@ int main(int argc, char **argv)
   tcp_client trimble_tcp_client;
   trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
 
+  // FOR DEBUGGING
+  string test_str = "1,1000.000,2000.000,10;0,3000.000,4000.000,10.2;";
+
   // Enter into a loop, consistently polling TA for positions, only exit
   // when "Ctrl + C" is pressed
   while (ros::ok())
   {
     // Get a message from Trimble Precision
-    latest_tp_message.clear();
-    latest_tp_message = trimble_tcp_client.receive(BUFF_LENGTH);
-    //ROS_INFO("Received TP message: %s", latest_tp_message);
+//    latest_tp_message.clear();
+//    latest_tp_message = trimble_tcp_client.receive(BUFF_LENGTH);
+//    ROS_INFO("Received TP message: %s", latest_tp_message.c_str());
 
     // Parse the string to extract the relevent messages
-    ParseTrimblePrecisionMessage(latest_tp_message, latest_goal,
+    ParseTrimblePrecisionMessage(test_str, latest_goal,
                                  latest_position, latest_orientation);
 
-    // Publish the latest messages IF AND ONLY IF the are new
-    if (latest_goal != previous_goal)
+    ConstructOdometryMessage(latest_position, latest_odom_msg);
+    odom_publisher.publish(latest_odom_msg);
+
+    // Publish the latest messages IF AND ONLY IF they are new
+    if (latest_goal.compare(previous_goal) != 0)
     {
       // Publish goal
       previous_goal = latest_goal;
     }
-    if (latest_position != previous_position)
+    if (latest_position.compare(previous_position) != 0)
     {
-      // Publish position
+      ConstructOdometryMessage(latest_position, latest_odom_msg);
+      odom_publisher.publish(latest_odom_msg);
+      cout << "yay" << endl;
       previous_position = latest_position;
     }
-    if (latest_orientation != previous_orientation)
+    if (latest_orientation.compare(previous_orientation) != 0)
     {
-      // Publish orientation
+      ConstructGoalMessage(latest_goal, latest_goal_msg);
+      goal_publisher.publish(latest_goal_msg);
       previous_orientation = latest_orientation;
     }
 
