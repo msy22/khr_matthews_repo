@@ -165,6 +165,9 @@ int main(int argc, char **argv)
   ros::Publisher odom_publisher = nh.advertise<nav_msgs::Odometry>("odometry/prism", 1000);
   ros::Publisher goal_publisher = nh.advertise<geometry_msgs::PoseStamped>("move_base_simple/goal", 1000);
 
+  // Wait so the publishers have time to become established
+  ros::Duration(0.5).sleep();
+
   // Set up various containers for ROS messages
   string latest_tp_message, latest_goal, latest_position, latest_orientation,
          previous_position, previous_goal, previous_orientation;
@@ -195,26 +198,21 @@ int main(int argc, char **argv)
     ParseTrimblePrecisionMessage(test_str, latest_goal,
                                  latest_position, latest_orientation);
 
-    ConstructOdometryMessage(latest_position, latest_odom_msg);
-    odom_publisher.publish(latest_odom_msg);
-
     // Publish the latest messages IF AND ONLY IF they are new
     if (latest_goal.compare(previous_goal) != 0)
     {
-      // Publish goal
+      ConstructGoalMessage(latest_goal, latest_goal_msg);
+      goal_publisher.publish(latest_goal_msg);
       previous_goal = latest_goal;
     }
     if (latest_position.compare(previous_position) != 0)
     {
       ConstructOdometryMessage(latest_position, latest_odom_msg);
       odom_publisher.publish(latest_odom_msg);
-      cout << "yay" << endl;
       previous_position = latest_position;
     }
     if (latest_orientation.compare(previous_orientation) != 0)
     {
-      ConstructGoalMessage(latest_goal, latest_goal_msg);
-      goal_publisher.publish(latest_goal_msg);
       previous_orientation = latest_orientation;
     }
 
