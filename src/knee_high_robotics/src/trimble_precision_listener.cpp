@@ -61,6 +61,7 @@ void SplitStringOfNumbers (string string_to_be_split,
 }
 
 
+
 void ConstructOdometryMessage(string input_str,
                               nav_msgs::Odometry& output_msg)
 {
@@ -183,7 +184,7 @@ int main(int argc, char **argv)
   trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
 
   // FOR DEBUGGING
-  string test_str = "1,1000.000,2000.000,10;0,3000.000,4000.000,10.2;";
+  string test_str = "1,10.000,20.000,5;0,10.000,20.000,5;";
 
   // Enter into a loop, consistently polling TA for positions, only exit
   // when "Ctrl + C" is pressed
