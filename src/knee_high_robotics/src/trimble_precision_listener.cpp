@@ -26,7 +26,7 @@ using namespace std;
 #define PORT_OUTPUT 2001
 #define IP_WAFFLE "192.168.20"
 #define IP_VM "192.168.1.5"
-#define IP_LAPTOP "171.0.12.145"         // Address of laptop running the TA server default: 172.16.12.39"
+#define IP_LAPTOP "172.16.13.35"         // Address of laptop running the TA server default: 172.16.12.39"
 #define IP_XYZ_ROUTER "192.168.1.1"
 #define IP_MATTS_LAPTOP "192.168.2.20"  // Address of Linux laptop
 #define IP_JACKAL "192.168.2.22"        // WiFi address of Jackal
@@ -75,6 +75,24 @@ void ConstructOdometryMessage(string input_str,
   output_msg.pose.pose.position.y = input_data[1];
   output_msg.pose.pose.position.x = input_data[2];
   output_msg.pose.pose.position.z = input_data[3];
+  output_msg.pose.pose.orientation.w = 1.0;
+}
+
+
+
+void HackOdometryMessage(string input_str,
+                              nav_msgs::Odometry& output_msg)
+{
+  vector<float> input_data;
+  SplitStringOfNumbers(input_str, input_data);
+
+  // Fill out message details
+  output_msg.header.frame_id = "map";
+  output_msg.child_frame_id = "aux_gps"; // dirty hack because the prism is where the antenna was
+  output_msg.header.stamp = ros::Time::now();
+  output_msg.pose.pose.position.y = input_data[0];
+  output_msg.pose.pose.position.x = input_data[1];
+  output_msg.pose.pose.position.z = 0.658; // hard-coded height of prism on robot
   output_msg.pose.pose.orientation.w = 1.0;
 }
 
@@ -134,6 +152,24 @@ void ParseTrimblePrecisionMessage (string input_tp_msg,
 }
 
 
+void basicParser(string input_tp_msg,
+                 string& latest_position)
+{
+  vector<string> elements;
+  string delimiter = ",";
+  size_t pos = 0;
+  string substr;
+
+  while ((pos = input_tp_msg.find(delimiter)) != string::npos)
+  {
+    substr = input_tp_msg.substr(0, pos+1);
+    boost::algorithm::trim(substr);
+    elements.push_back(substr);
+    input_tp_msg.erase(0, pos + delimiter.length());
+  }
+}
+
+
 
 void TestTcpClientWithGoogle ()
 {
@@ -184,20 +220,24 @@ int main(int argc, char **argv)
   trimble_tcp_client.conn(IP_LAPTOP, PORT_INPUT);
 
   // FOR DEBUGGING
-  string test_str = "1,10.000,20.000,5;0,10.000,20.000,5;";
+  //string test_str = "1,10.000,20.000,5;0,10.000,20.000,5;";
 
   // Enter into a loop, consistently polling TA for positions, only exit
   // when "Ctrl + C" is pressed
   while (ros::ok())
   {
     // Get a message from Trimble Precision
-//    latest_tp_message.clear();
-//    latest_tp_message = trimble_tcp_client.receive(BUFF_LENGTH);
-//    ROS_INFO("Received TP message: %s", latest_tp_message.c_str());
+    latest_tp_message.clear();
+    latest_tp_message = trimble_tcp_client.receive(BUFF_LENGTH);
+    ROS_INFO("Received TP message: %s", latest_tp_message.c_str());
+
+    // code to make this work
+    HackOdometryMessage(latest_tp_message, latest_odom_msg);
+    odom_publisher.publish(latest_odom_msg);
 
     // Parse the string to extract the relevent messages
-    ParseTrimblePrecisionMessage(test_str, latest_goal,
-                                 latest_position, latest_orientation);
+//    ParseTrimblePrecisionMessage(latest_tp_message, latest_goal,
+//                                 latest_position, latest_orientation);
 
     // Publish the latest messages IF AND ONLY IF they are new
     if (latest_goal.compare(previous_goal) != 0)
