@@ -13,6 +13,7 @@
 #include <eigen3/Eigen/Dense>             // Required for matrix inverse calcs
 #include <eigen3/Eigen/Geometry>          // Required for matrix definitions
 
+#define _USE_MATH_DEFINES
 
 // Setup namespaces_____________________________________________________________
 using namespace std;
@@ -76,37 +77,55 @@ class DataSelector
 
       latest_imu_msg = imu_data;
 
-      // Calculate and print the yaw for debugging
+      // Apply a dirty hack to the yaw to get it to align with the SX10 world frame
       Eigen::Quaternion<double> q1(imu_data.orientation.w,
                                    imu_data.orientation.x,
                                    imu_data.orientation.y,
                                    imu_data.orientation.z);
       Eigen::Matrix3d R;
       R = q1.toRotationMatrix();
-      double roll, pitch, yaw;
+      double angle = 70.0 * (M_PI/180.0);
+      Eigen::Matrix3d R_offset;
+      R_offset <<  cos(angle), sin(angle), 0,
+                  -sin(angle), cos(angle), 0,
+                   0,          0,          1;
+      R = R * R_offset;
+      Eigen::Quaterniond q2(R);
+      latest_imu_msg.orientation.w = q2.w();
+      latest_imu_msg.orientation.x = q2.x();
+      latest_imu_msg.orientation.y = q2.y();
+      latest_imu_msg.orientation.z = q2.z();
+
+      // Print the yaw to confirm that the hack worked
+      double roll, pitch, yaw, yaw_to_print;
       CalculateRpyFromMatrix(R, roll, pitch, yaw);
-      cout << "Yaw: " << yaw << endl;
-
-      // Hack the yaw to conform to the SX10 world frame
-
-
+      yaw_to_print = yaw;
+      yaw_to_print = yaw_to_print * (180 / M_PI);                   // Convert to degrees
+      if (yaw_to_print < 0) { yaw_to_print = 360 + yaw_to_print;}   // Scale to 0->360
+      double yaw_true = yaw_to_print;
+      yaw_true = 360.0 - yaw_true;                                  // Reverse direction
+      yaw_true = yaw_true + 90.0;                                   // So 0 is north
+      if (yaw_true > 360) { yaw_true = yaw_true - 360;}   // Scale to 0->360
+      cout << "Yaw (REP103): " << setprecision(4) << yaw_to_print
+           << " (True N): " << yaw_true << endl;
 
       // Re-publish the IMU data IF the robot is moving
-      if (use_imu) { orientation_publisher.publish(imu_data); }
+      if (use_imu) { orientation_publisher.publish(latest_imu_msg); }
     }
 
 
 
     void odom_callback(const nav_msgs::Odometry& odom_data)
     {
+      sensor_msgs::Imu imu_data = latest_imu_msg;
       Eigen::Matrix4d prism_pose = Eigen::Matrix4d::Identity();
 
       // Get the orientation of the prism from the IMU
       Eigen::Matrix3d R;
-      Eigen::Quaternion<double> q1(latest_imu_msg.orientation.w,
-                                   latest_imu_msg.orientation.x,
-                                   latest_imu_msg.orientation.y,
-                                   latest_imu_msg.orientation.z);
+      Eigen::Quaternion<double> q1(imu_data.orientation.w,
+                                   imu_data.orientation.x,
+                                   imu_data.orientation.y,
+                                   imu_data.orientation.z);
       R = q1.toRotationMatrix();
       prism_pose.block<3,3>(0,0) = R;
 
