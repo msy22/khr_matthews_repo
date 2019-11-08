@@ -39,6 +39,17 @@ print4x4Matrix (Eigen::Matrix<Scalar, 4, 4>& matrix)
 
 
 
+void
+CalculateRpyFromMatrix(Eigen::Matrix<double, 3, 3>& mat,
+                       double& roll, double& pitch, double& yaw)
+{
+  roll = atan2(mat(2,1),mat(2,2));
+  pitch = atan2(-mat(2,0), sqrt(pow(mat(2,1),2) + pow(mat(2,2),2)));
+  yaw = atan2(mat(1,0), mat(0,0));
+}
+
+
+
 class DataSelector
 {
   public:
@@ -65,6 +76,21 @@ class DataSelector
 
       latest_imu_msg = imu_data;
 
+      // Calculate and print the yaw for debugging
+      Eigen::Quaternion<double> q1(imu_data.orientation.w,
+                                   imu_data.orientation.x,
+                                   imu_data.orientation.y,
+                                   imu_data.orientation.z);
+      Eigen::Matrix3d R;
+      R = q1.toRotationMatrix();
+      double roll, pitch, yaw;
+      CalculateRpyFromMatrix(R, roll, pitch, yaw);
+      cout << "Yaw: " << yaw << endl;
+
+      // Hack the yaw to conform to the SX10 world frame
+
+
+
       // Re-publish the IMU data IF the robot is moving
       if (use_imu) { orientation_publisher.publish(imu_data); }
     }
@@ -89,9 +115,6 @@ class DataSelector
       prism_pose(1,3) = odom_data.pose.pose.position.y;
       prism_pose(2,3) = odom_data.pose.pose.position.z;
 
-//      cout << "Prism pose: "<< endl;
-//      print4x4Matrix(prism_pose);
-
       // Get the transform from prism to base
       Eigen::Matrix4d prism_to_base = Eigen::Matrix4d::Identity();
       prism_to_base << 1, 0, 0, -0.108,
@@ -102,9 +125,6 @@ class DataSelector
       // Calculate the pose of the base
       Eigen::Matrix4d base_pose = Eigen::Matrix4d::Identity();
       base_pose = prism_pose * prism_to_base;
-
-//      cout << "base pose" << endl;
-//      print4x4Matrix(base_pose);
 
       // Convert to ROS format and publish
       nav_msgs::Odometry output_msg;
@@ -135,7 +155,6 @@ class DataSelector
     // Class variables
     bool use_imu;
     sensor_msgs::Imu latest_imu_msg;
-
 
 }; // End of class DataSelector
 
